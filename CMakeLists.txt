@@ -7,4 +7,4 @@ set(CMAKE_C_STANDARD 11)
 add_custom_target(test
         ../test.bash
 )
-add_executable(9cc main.c)
+add_executable(9cc main.c token.c token.h)
