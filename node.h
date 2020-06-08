@@ -30,5 +30,6 @@ Node *new_node_num(int val);
 Node *expr();
 Node *mul();
 Node *primary();
+Node *unary();
 
 #endif //INC_9CC_NODE_H
