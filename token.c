@@ -4,14 +4,16 @@
 
 #include "token.h"
 
-
+bool starts_with(const char *p, const char *q) {
+    return memcmp(p, q, strlen(q)) == 0;
+}
 void error_at(char *loc, char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
 
     unsigned long pos = loc - user_input;
     fprintf(stderr, "%s\n", user_input);
-    fprintf(stderr, "%*s", (int)pos, "  ");
+    fprintf(stderr, "%*s", (int)pos, "");
     fprintf(stderr, "^ ");
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
@@ -22,17 +24,19 @@ void move_next() {
     token = token->next;
 }
 
-bool consume(char expected) {
-    if (token->kind != TK_RESERVED || token->str[0] != expected) {
+bool consume(char* expected) {
+    if (token->kind != TK_RESERVED ||
+        strlen(expected) != token->len ||
+        !starts_with(token->str, expected)) {
         return false;
     }
     move_next();
     return true;
 }
 
-void expect(char expected) {
+void expect(char* expected) {
     if (!consume(expected)) {
-        error_at(token->str, "'%c'ではありません", expected);
+        error_at(token->str, "'%s'ではありません", expected);
     }
 }
 
@@ -47,12 +51,22 @@ bool at_eof() {
     return token->kind == TK_EOF;
 }
 
-Token *new_token(TokenKind kind, Token *cur, char *str) {
+Token *new_token(TokenKind kind, Token *cur, char *str, size_t len) {
     Token *tok = calloc(1, sizeof(Token));
     tok->kind = kind;
     tok->str = str;
+    tok->len = len;
     cur->next = tok;
     return tok;
+}
+
+size_t isreserved(char *p) {
+    const char *reserved[] = {"==", "!=", "<=", ">=", "<", ">", "+", "-", "*", "/", "(", ")"};
+    for (int i = 0; i < sizeof(reserved)/sizeof(char*); i++) {
+        if (!starts_with(p, reserved[i])) continue;
+        return strlen(reserved[i]);
+    }
+    return 0;
 }
 
 Token *tokenize(char *p) {
@@ -65,21 +79,25 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')') {
-            cur = new_token(TK_RESERVED, cur, p);
-            p++;
+        size_t reserved_len = isreserved(p);
+
+        if (reserved_len > 0) {
+            cur = new_token(TK_RESERVED, cur, p, reserved_len);
+            p += reserved_len;
             continue;
         }
 
         if (isdigit(*p)) {
-            cur = new_token(TK_INT, cur, p);
+            cur = new_token(TK_INT, cur, p, 0);
+            char *q = p;
             cur->val = (int)strtol(p, &p, 10);
+            cur->len = p - q;
             continue;
         }
 
         error_at(p, "トークナイズできません");
     }
 
-    new_token(TK_EOF, cur, p);
+    new_token(TK_EOF, cur, p, 0);
     return head.next;
 }

@@ -5,6 +5,7 @@
 #ifndef INC_9CC_TOKEN_H
 #define INC_9CC_TOKEN_H
 
+#include <string.h>
 #include <zconf.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,16 +25,17 @@ struct Token {
     Token *next;  // next token
     int val;  // token value;
     char *str;  // token string;
+    size_t len; // length of str;
 };
 
 Token *token;
 char *user_input;
 void error_at(char*, char*, ...);
-void expect(char);
+void expect(char*);
 int expect_number();
 bool at_eof();
 Token *tokenize(char*);
-bool consume(char);
+bool consume(char*);
 
 
 #endif //INC_9CC_TOKEN_H

@@ -9,10 +9,14 @@
 #include "token.h"
 
 typedef enum {
-    ND_ADD,
-    ND_SUB,
-    ND_MUL,
-    ND_DIV,
+    ND_ADD, // +
+    ND_SUB, // -
+    ND_MUL, // *
+    ND_DIV, // /
+    ND_EQ, // ==
+    ND_NE, // !=
+    ND_LT, // <
+    ND_LE, // <=
     ND_NUM, // integer
 } NodeKind;
 
@@ -27,9 +31,12 @@ struct Node {
 
 Node *new_node(NodeKind, Node*, Node*);
 Node *new_node_num(int val);
-Node *expr();
-Node *mul();
 Node *primary();
 Node *unary();
+Node *mul();
+Node *add();
+Node *relational();
+Node *equality();
+Node *expr();
 
 #endif //INC_9CC_NODE_H
