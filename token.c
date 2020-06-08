@@ -4,21 +4,6 @@
 
 #include "token.h"
 
-typedef enum {
-    TK_RESERVED,
-    TK_INT,  // integer
-    TK_EOF,
-} TokenKind;
-
-struct Token {
-    TokenKind kind;  // type of token
-    Token *next;  // next token
-    int val;  // token kind;
-    char *str;  // token string;
-};
-
-// current token
-
 
 void error_at(char *loc, char *fmt, ...) {
     va_list ap;
@@ -80,7 +65,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (*p == '+' || *p == '-') {
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')') {
             cur = new_token(TK_RESERVED, cur, p);
             p++;
             continue;
