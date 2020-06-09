@@ -7,6 +7,17 @@
 bool starts_with(const char *p, const char *q) {
     return memcmp(p, q, strlen(q)) == 0;
 }
+
+void error(char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+}
+
+
 void error_at(char *loc, char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
@@ -15,9 +26,7 @@ void error_at(char *loc, char *fmt, ...) {
     fprintf(stderr, "%s\n", user_input);
     fprintf(stderr, "%*s", (int)pos, "");
     fprintf(stderr, "^ ");
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
-    exit(1);
+    error(fmt, ap);
 }
 
 void move_next() {
@@ -32,6 +41,13 @@ bool consume(char* expected) {
     }
     move_next();
     return true;
+}
+
+Token *consume_ident() {
+    if (token->kind != TK_IDENT) return NULL;
+    Token *tok = token;
+    move_next();
+    return tok;
 }
 
 void expect(char* expected) {
@@ -61,7 +77,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, size_t len) {
 }
 
 size_t isreserved(char *p) {
-    const char *reserved[] = {"==", "!=", "<=", ">=", "<", ">", "+", "-", "*", "/", "(", ")"};
+    const char *reserved[] = {"==", "!=", "<=", ">=", "<", ">", "+", "-", "*", "/", "(", ")", "=", ";"};
     for (int i = 0; i < sizeof(reserved)/sizeof(char*); i++) {
         if (!starts_with(p, reserved[i])) continue;
         return strlen(reserved[i]);
@@ -92,6 +108,12 @@ Token *tokenize(char *p) {
             char *q = p;
             cur->val = (int)strtol(p, &p, 10);
             cur->len = p - q;
+            continue;
+        }
+
+        if ('a' <= *p && *p <= 'z') {
+            cur = new_token(TK_IDENT, cur, p, 1);
+            p++;
             continue;
         }
 

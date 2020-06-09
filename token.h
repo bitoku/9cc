@@ -15,6 +15,7 @@
 typedef enum {
     TK_RESERVED,
     TK_INT,  // integer
+    TK_IDENT,  // identifier
     TK_EOF,
 } TokenKind;
 
@@ -30,12 +31,14 @@ struct Token {
 
 Token *token;
 char *user_input;
+void error(char*, ...);
 void error_at(char*, char*, ...);
 void expect(char*);
 int expect_number();
 bool at_eof();
 Token *tokenize(char*);
 bool consume(char*);
+Token *consume_ident();
 
 
 #endif //INC_9CC_TOKEN_H

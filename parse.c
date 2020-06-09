@@ -2,7 +2,7 @@
 // Created by 徳備彩人 on 2020/06/08.
 //
 
-#include "node.h"
+#include "parse.h"
 
 Node *new_node(NodeKind kind, Node *left, Node *right) {
     Node *node = calloc(1, sizeof(Node));
@@ -24,6 +24,14 @@ Node *primary() {
     if (consume("(")) {
         Node *node = expr();
         expect(")");
+        return node;
+    }
+
+    Token *tok = consume_ident();
+    if (tok) {
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_LVAR;
+        node->offset = (tok->str[0] - 'a' + 1) * 8;
         return node;
     }
     return new_node_num(expect_number());
@@ -91,6 +99,27 @@ Node *equality() {
     }
 }
 
+Node *assign() {
+    Node *node = equality();
+    if (consume("=")) {
+        node = new_node(ND_ASSIGN, node, assign());
+    }
+    return node;
+}
+
 Node *expr() {
-    return equality();
+    return assign();
+}
+
+Node *statement() {
+    Node *node = expr();
+    expect(";");
+    return node;
+}
+
+void program() {
+    for (int i = 0; i < CODE_LENGTH && !at_eof(); i++) {
+        code[i] = statement();
+    }
+    code[CODE_LENGTH] = NULL;
 }
