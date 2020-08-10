@@ -20,7 +20,6 @@ typedef enum {
 } TokenKind;
 
 typedef struct Token Token;
-
 struct Token {
     TokenKind kind;  // type of token
     Token *next;  // next token

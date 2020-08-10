@@ -32,6 +32,17 @@ struct Node {
     int offset; // used only if variable
 };
 
+typedef struct LVar LVar;
+
+struct LVar {
+    LVar *next;
+    char *name;
+    int len;
+    int offset;
+};
+
+LVar *locals;
+
 #define CODE_LENGTH 100
 Node *code[CODE_LENGTH];
 

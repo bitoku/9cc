@@ -39,5 +39,7 @@ assert 1 'i=1;i;'
 assert 1 'i=j=1;i;'
 assert 2 'i=1+1;i;'
 assert 11 'i=2*3;j=i+5;j;'
+assert 1 'foo=bar=1;foo;'
+assert 1 'foo=bar=1;bar;'
 
 echo OK

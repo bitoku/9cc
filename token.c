@@ -85,6 +85,15 @@ size_t isreserved(char *p) {
     return 0;
 }
 
+char *find_ident(char *p) {
+    if (!(('a' <= *p && *p <= 'z') || ('A' <= *p && *p <= 'Z') || *p == '_')) return NULL;
+    p++;
+    while ((('a' <= *p && *p <= 'z') || ('A' <= *p && *p <= 'Z') || *p == '_' || ('0' <= *p && *p <= '9'))) {
+        p++;
+    }
+    return p;
+}
+
 Token *tokenize(char *p) {
     Token head;
     head.next = NULL;
@@ -111,9 +120,10 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if ('a' <= *p && *p <= 'z') {
-            cur = new_token(TK_IDENT, cur, p, 1);
-            p++;
+        char *ident_end = find_ident(p);
+        if (ident_end) {
+            cur = new_token(TK_IDENT, cur, p, ident_end - p);
+            p = ident_end;
             continue;
         }
 

@@ -20,6 +20,15 @@ Node *new_node_num(int val) {
     return node;
 }
 
+LVar *find_lvar(Token *tok) {
+    for (LVar *lvar = locals; lvar; lvar = lvar->next) {
+        if (lvar->len == tok->len && !memcmp(tok->str, lvar->name, lvar->len)){
+            return lvar;
+        }
+    }
+    return NULL;
+}
+
 Node *primary() {
     if (consume("(")) {
         Node *node = expr();
@@ -31,7 +40,19 @@ Node *primary() {
     if (tok) {
         Node *node = calloc(1, sizeof(Node));
         node->kind = ND_LVAR;
-        node->offset = (tok->str[0] - 'a' + 1) * 8;
+
+        LVar *lvar = find_lvar(tok);
+        if (lvar) {
+            node->offset = lvar->offset;
+        } else {
+            lvar = calloc(1, sizeof(LVar));
+            lvar->next = locals;
+            lvar->name = tok->str;
+            lvar->len = tok->len;
+            lvar->offset = locals ? locals->offset + 8 : 0;
+            node->offset = lvar->offset;
+            locals = lvar;
+        }
         return node;
     }
     return new_node_num(expect_number());
