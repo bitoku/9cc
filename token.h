@@ -17,6 +17,7 @@ typedef enum {
     TK_INT,  // integer
     TK_IDENT,  // identifier
     TK_EOF,
+    TK_RETURN,
 } TokenKind;
 
 typedef struct Token Token;

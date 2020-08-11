@@ -41,5 +41,8 @@ assert 2 'i=1+1;i;'
 assert 11 'i=2*3;j=i+5;j;'
 assert 1 'foo=bar=1;foo;'
 assert 1 'foo=bar=1;bar;'
+assert 0 'return 0;'
+assert 2 'return 1+1;'
+assert 3 'i=1+2;return i;'
 
 echo OK

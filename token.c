@@ -34,8 +34,7 @@ void move_next() {
 }
 
 bool consume(char* expected) {
-    if (token->kind != TK_RESERVED ||
-        strlen(expected) != token->len ||
+    if (strlen(expected) != token->len ||
         !starts_with(token->str, expected)) {
         return false;
     }
@@ -76,7 +75,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, size_t len) {
     return tok;
 }
 
-size_t isreserved(char *p) {
+size_t issymbol(char *p) {
     const char *reserved[] = {"==", "!=", "<=", ">=", "<", ">", "+", "-", "*", "/", "(", ")", "=", ";"};
     for (int i = 0; i < sizeof(reserved)/sizeof(char*); i++) {
         if (!starts_with(p, reserved[i])) continue;
@@ -85,10 +84,24 @@ size_t isreserved(char *p) {
     return 0;
 }
 
+Token *alnumtoken(char *p, Token *cur, size_t len) {
+    if (strncmp(p, "return", len) == 0) {
+        return new_token(TK_RETURN, cur, p, 6);
+    }
+    return new_token(TK_IDENT, cur, p, len);
+}
+
+int is_alnum(char c) {
+    return ('a' <= c && c <= 'z') ||
+           ('A' <= c && c <= 'Z') ||
+           ('0' <= c && c <= '9') ||
+           (c == '_');
+}
+
 char *find_ident(char *p) {
     if (!(('a' <= *p && *p <= 'z') || ('A' <= *p && *p <= 'Z') || *p == '_')) return NULL;
     p++;
-    while ((('a' <= *p && *p <= 'z') || ('A' <= *p && *p <= 'Z') || *p == '_' || ('0' <= *p && *p <= '9'))) {
+    while (is_alnum(*p)) {
         p++;
     }
     return p;
@@ -104,7 +117,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        size_t reserved_len = isreserved(p);
+        size_t reserved_len = issymbol(p);
 
         if (reserved_len > 0) {
             cur = new_token(TK_RESERVED, cur, p, reserved_len);
@@ -122,7 +135,7 @@ Token *tokenize(char *p) {
 
         char *ident_end = find_ident(p);
         if (ident_end) {
-            cur = new_token(TK_IDENT, cur, p, ident_end - p);
+            cur = alnumtoken(p, cur, ident_end - p);
             p = ident_end;
             continue;
         }
