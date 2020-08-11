@@ -18,6 +18,10 @@ typedef enum {
     TK_IDENT,  // identifier
     TK_EOF,
     TK_RETURN,
+    TK_IF,
+    TK_ELSE,
+    TK_WHILE,
+    TK_FOR,
 } TokenKind;
 
 typedef struct Token Token;
@@ -31,6 +35,7 @@ struct Token {
 
 Token *token;
 char *user_input;
+bool starts_with(const char*, const char*);
 void error(char*, ...);
 void error_at(char*, char*, ...);
 void expect(char*);
@@ -38,6 +43,7 @@ int expect_number();
 bool at_eof();
 Token *tokenize(char*);
 bool consume(char*);
+bool peek(char*);
 Token *consume_ident();
 
 

@@ -10,4 +10,6 @@
 void codegen();
 void gen(const Node*);
 
+int label_count;
+
 #endif //INC_9CC_CODEGEN_H

@@ -21,6 +21,9 @@ typedef enum {
     ND_LVAR, // local var
     ND_NUM, // integer
     ND_RETURN, // return
+    ND_IF,
+    ND_WHILE,
+    ND_FOR,
 } NodeKind;
 
 typedef struct Node Node;
@@ -31,6 +34,11 @@ struct Node {
     Node *right;
     int val;  // used only if integer
     int offset; // used only if variable
+    Node *init; // used if for
+    Node *loop; // used if for
+    Node *condition; // used if for, while, if
+    Node *main_statement; // used if for, while, if
+    Node *alt_statement; // used if
 };
 
 typedef struct LVar LVar;

@@ -12,6 +12,40 @@ Node *new_node(NodeKind kind, Node *left, Node *right) {
     return node;
 }
 
+Node *new_node_if(Node *condition,
+                  Node *main_statement,
+                  Node *alt_statement)
+{
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_IF;
+    node->condition = condition;
+    node->main_statement = main_statement;
+    node->alt_statement = alt_statement;
+    return node;
+}
+
+Node *new_node_for(Node *init,
+                   Node *condition,
+                   Node *loop,
+                   Node *main_statement)
+{
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_FOR;
+    node->init = init;
+    node->condition = condition;
+    node->loop = loop;
+    node->main_statement = main_statement;
+    return node;
+}
+
+Node *new_node_while(Node *condition,
+                     Node *main_statement)
+{
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_WHILE;
+    node->condition = condition;
+    node->main_statement = main_statement;
+}
 
 Node *new_node_num(int val) {
     Node *node = calloc(1, sizeof(Node));
@@ -136,10 +170,44 @@ Node *statement() {
     Node *node;
     if (consume("return")) {
         node = new_node(ND_RETURN, expr(), NULL);
+        expect(";");
+    } else if (consume("if")) {
+        expect("(");
+        Node *condition = expr();
+        expect(")");
+        Node *main_statement = statement();
+        Node *alt_statement = NULL;
+        if (consume("else")) {
+            alt_statement = statement();
+        }
+        node = new_node_if(condition, main_statement, alt_statement);
+    } else if (consume("while")) {
+        expect("(");
+        Node *condition = expr();
+        expect(")");
+        Node *main_statement = statement();
+        node = new_node_while(condition, main_statement);
+    } else if (consume("for")) {
+        expect("(");
+        Node *init=NULL, *condition=NULL, *loop=NULL;
+        if (!consume(";")) {
+            init = expr();
+            expect(";");
+        }
+        if (!consume(";")) {
+            condition = expr();
+            expect(";");
+        }
+        if (!consume(")")) {
+            loop = expr();
+            expect(")");
+        }
+        Node *main_statement = statement();
+        node = new_node_for(init, condition, loop, main_statement);
     } else {
         node = expr();
+        expect(";");
     }
-    expect(";");
     return node;
 }
 

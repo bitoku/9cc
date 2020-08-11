@@ -8,6 +8,10 @@ bool starts_with(const char *p, const char *q) {
     return memcmp(p, q, strlen(q)) == 0;
 }
 
+bool strcmp_with_literal(const char *p, const char *q, size_t len) {
+    return strlen(q) == len && starts_with(p, q);
+}
+
 void error(char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
@@ -40,6 +44,11 @@ bool consume(char* expected) {
     }
     move_next();
     return true;
+}
+
+bool peek(char *expected) {
+    int x = strlen(expected);
+    return token->next && strncmp(token->next->str, expected, strlen(expected)) == 0;
 }
 
 Token *consume_ident() {
@@ -85,8 +94,16 @@ size_t issymbol(char *p) {
 }
 
 Token *alnumtoken(char *p, Token *cur, size_t len) {
-    if (strncmp(p, "return", len) == 0) {
+    if (strcmp_with_literal(p, "return", len)) {
         return new_token(TK_RETURN, cur, p, 6);
+    } else if (strcmp_with_literal(p, "if", len)) {
+        return new_token(TK_IF, cur, p, 2);
+    } else if (strcmp_with_literal(p, "else", len)) {
+        return new_token(TK_ELSE, cur, p, 4);
+    } else if (strcmp_with_literal(p, "while", len)) {
+        return new_token(TK_WHILE, cur, p, 5);
+    } else if (strcmp_with_literal(p, "for", len)) {
+        return new_token(TK_FOR, cur, p, 3);
     }
     return new_token(TK_IDENT, cur, p, len);
 }
