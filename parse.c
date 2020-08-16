@@ -168,7 +168,19 @@ Node *expr() {
 
 Node *statement() {
     Node *node;
-    if (consume("return")) {
+    if (consume("{")) {
+        NodeList *head = calloc(1, sizeof(NodeList));
+        NodeList *current_nl = head;
+        for (int i = 0; i < CODE_LENGTH && !consume("}"); i++) {
+            NodeList *new_nl = calloc(1, sizeof(NodeList));
+            new_nl->node = statement();
+            current_nl->next = new_nl;
+            current_nl = new_nl;
+        }
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_BLOCK;
+        node->statements = head->next;
+    } else if (consume("return")) {
         node = new_node(ND_RETURN, expr(), NULL);
         expect(";");
     } else if (consume("if")) {

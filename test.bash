@@ -54,5 +54,9 @@ assert 10 'j=0; for(i=0;i<10;i=i+1) j=j+1; j;'
 assert 10 'i=0; j=0; for(;i<10;i=i+1) j=j+1; j;'
 assert 10 'i=0; for(;i<10;) i=i+1; i;'
 assert 10 'i=0; while(i<10) i = i + 1; i;'
+assert 1 '{i=0;i=i+1;}i;'
+assert 5 'i=0;if(i==0){return 5;}else{return 10;}'
+assert 5 'i=0;while(i<10){i=i+1; if(i==5) {return 5;}}'
+assert -512 'i=0;for(j=0;j<10;j=j+1){i=i*2;i=i-1;}i;'
 
 echo OK

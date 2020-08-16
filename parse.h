@@ -24,9 +24,20 @@ typedef enum {
     ND_IF,
     ND_WHILE,
     ND_FOR,
+    ND_BLOCK,
 } NodeKind;
 
+typedef struct NodeList NodeList;
 typedef struct Node Node;
+
+struct Node;
+struct NodeList;
+
+struct NodeList {
+    NodeList *next;
+    Node *node;
+};
+
 
 struct Node {
     NodeKind kind;
@@ -36,9 +47,10 @@ struct Node {
     int offset; // used only if variable
     Node *init; // used if for
     Node *loop; // used if for
-    Node *condition; // used if for, while, if
-    Node *main_statement; // used if for, while, if
-    Node *alt_statement; // used if
+    Node *condition; // used if for, while, "if"
+    Node *main_statement; // used if for, while, "if"
+    Node *alt_statement; // used if "if"
+    NodeList *statements; // used if block
 };
 
 typedef struct LVar LVar;

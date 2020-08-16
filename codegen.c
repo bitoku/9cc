@@ -16,6 +16,12 @@ void gen(const Node *node) {
     int label = label_count++;
 
     switch (node->kind) {
+    case ND_BLOCK:
+        for (NodeList *cur = node->statements; cur; cur = cur->next) {
+            gen(cur->node);
+            printf("  pop rax\n");
+        }
+        return;
     case ND_IF:
         gen(node->condition);
         printf("  pop rax\n");
