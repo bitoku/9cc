@@ -47,7 +47,6 @@ bool consume(char* expected) {
 }
 
 bool peek(char *expected) {
-    int x = strlen(expected);
     return token->next && strncmp(token->next->str, expected, strlen(expected)) == 0;
 }
 
@@ -85,7 +84,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, size_t len) {
 }
 
 size_t issymbol(char *p) {
-    const char *reserved[] = {"==", "!=", "<=", ">=", "<", ">", "+", "-", "*", "/", "(", ")", "=", ";", "{", "}"};
+    const char *reserved[] = {"==", "!=", "<=", ">=", "<", ">", "+", "-", "*", "/", "(", ")", "=", ";", "{", "}", ","};
     for (int i = 0; i < sizeof(reserved)/sizeof(char*); i++) {
         if (!starts_with(p, reserved[i])) continue;
         return strlen(reserved[i]);

@@ -4,6 +4,8 @@
 
 #include "codegen.h"
 
+static char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+
 void gen_lval(const Node *node) {
     if (node->kind != ND_LVAR) error("左辺値が変数ではありません");
 
@@ -68,6 +70,7 @@ void gen(const Node *node) {
         printf("  mov rsp, rbp\n");
         printf("  pop rbp\n");
         printf("  ret\n");
+        return;
     case ND_NUM:
         printf("  push %d\n", node->val);
         return;
@@ -85,6 +88,21 @@ void gen(const Node *node) {
         printf("  mov [rax], rdi\n");
         printf("  push rdi\n");
         return;
+    case ND_FUNCCALL: {
+        int nargs = 0;
+        for (NodeList *arg = node->args; arg; arg = arg->next) {
+            gen(arg->node);
+//            printf("  push rax\n");
+            nargs++;
+        }
+
+        for (int i = nargs-1; i >= 0; i--) {
+            printf("  pop %s\n", argreg[i]);
+        }
+        printf("  call _%s\n", node->funcname);
+        printf("  push rax\n");
+        return;
+    }
     }
 
     gen(node->left);

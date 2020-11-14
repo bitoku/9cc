@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
 
+cat <<EOF | gcc -xc -c -o tmp2.o -
+int ret3() { return 3; }
+int ret5() { return 5; }
+int add(int x, int y) { return x + y; }
+int sub(int x, int y) { return x - y; }
+int add6(int a, int b, int c, int d, int e, int f) {
+  return a + b + c + d + e + f;
+}
+EOF
+
 assert() {
   expected="$1"
   input="$2"
 
-  ./9cc "$input" > tmp.s
-  gcc -o tmp tmp.s
+  ./cmake-build-debug/9cc "$input" > tmp.s
+  gcc -o tmp tmp.s tmp2.o
   ./tmp
   actual="$?"
 
@@ -57,6 +67,15 @@ assert 10 'i=0; while(i<10) i = i + 1; i;'
 assert 1 '{i=0;i=i+1;}i;'
 assert 5 'i=0;if(i==0){return 5;}else{return 10;}'
 assert 5 'i=0;while(i<10){i=i+1; if(i==5) {return 5;}}'
-assert -512 'i=0;for(j=0;j<10;j=j+1){i=i*2;i=i-1;}i;'
+assert 31 'i=0;for(j=0;j<5;j=j+1){i=i*2;i=i+1;}i;'
+assert 3 '{ return ret3(); }'
+assert 5 '{ return ret5(); }'
+assert 8 '{ return ret3() + ret5(); }'
+assert 3 '{ return add(1, 2); }'
+assert 8 '{ return add(ret3(), ret5()); }'
+assert 2 '{ return sub(5, 3); }'
+assert 21 '{ return add6(1, 2, 3, 4, 5, 6); }'
+assert 66 '{ return add6(1, 2, add6(3, 4, 5, 6, 7, 8), 9, 10, 11); }'
+assert 136 '{ return add6(1, 2, add6(3, add6(4, 5, 6, 7, 8, 9), 10, 11, 12, 13), 14, 15, 16); }'
 
 echo OK

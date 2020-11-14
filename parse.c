@@ -54,6 +54,13 @@ Node *new_node_num(int val) {
     return node;
 }
 
+Node *new_node_call(char *funcname) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_FUNCCALL;
+    node->funcname = funcname;
+    return node;
+}
+
 LVar *find_lvar(Token *tok) {
     for (LVar *lvar = locals; lvar; lvar = lvar->next) {
         if (lvar->len == tok->len && !memcmp(tok->str, lvar->name, lvar->len)){
@@ -63,6 +70,8 @@ LVar *find_lvar(Token *tok) {
     return NULL;
 }
 
+// primary = "(" expr ")" | ident args? | num
+// args = "(" (arg ("," arg)*)? ")"
 Node *primary() {
     if (consume("(")) {
         Node *node = expr();
@@ -72,6 +81,27 @@ Node *primary() {
 
     Token *tok = consume_ident();
     if (tok) {
+        // function call
+        if (consume("(")) {
+            Node *node = new_node_call(strndup(tok->str, tok->len));
+            if (consume(")")) {
+                return node;
+            }
+            NodeList *head = calloc(1, sizeof(NodeList));
+            NodeList *current = head;
+            while (true) {
+                NodeList *nodelist = calloc(1, sizeof(NodeList));
+                nodelist->node = expr();
+                current->next = nodelist;
+                current = nodelist;
+                if (consume(")")) {
+                    break;
+                }
+                expect(",");
+            }
+            node->args = head->next;
+            return node;
+        }
         Node *node = calloc(1, sizeof(Node));
         node->kind = ND_LVAR;
 
