@@ -226,17 +226,7 @@ Node *expr(Token **rest, Token *token) {
 Node *statement(Token** rest, Token *token) {
     Node *node;
     if (consume("{", &token)) {
-        NodeList *head = calloc(1, sizeof(NodeList));
-        NodeList *current_nl = head;
-        for (int i = 0; i < CODE_LENGTH && !consume("}", &token); i++) {
-            NodeList *new_nl = calloc(1, sizeof(NodeList));
-            new_nl->node = statement(&token, token);
-            current_nl->next = new_nl;
-            current_nl = new_nl;
-        }
-        node = calloc(1, sizeof(Node));
-        node->kind = ND_BLOCK;
-        node->statements = head->next;
+        node = block(&token, token);
     } else if (consume("return", &token)) {
         node = new_node(ND_RETURN, expr(&token, token), NULL);
         expect(";", &token);
@@ -281,9 +271,43 @@ Node *statement(Token** rest, Token *token) {
     return node;
 }
 
-void program(Token *token) {
-    for (int i = 0; i < CODE_LENGTH && !at_eof(token); i++) {
-        code[i] = statement(&token, token);
+Node *block(Token **rest, Token *token) {
+    Node *node;
+    NodeList *head = calloc(1, sizeof(NodeList));
+    NodeList *current_nl = head;
+    for (int i = 0; !consume("}", &token); i++) {
+        NodeList *new_nl = calloc(1, sizeof(NodeList));
+        new_nl->node = statement(&token, token);
+        current_nl->next = new_nl;
+        current_nl = new_nl;
     }
-    code[CODE_LENGTH] = NULL;
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_BLOCK;
+    node->statements = head->next;
+    *rest = token;
+    return node;
+}
+
+Function *func(Token **rest, Token *token) {
+    Function *function = calloc(1, sizeof(Function));
+    Token *tok = consume_ident(&token);
+    expect("(", &token);
+    // TODO
+    expect(")", &token);
+    expect("{", &token);
+    function->body = block(&token, token);
+    function->name = strndup(tok->str, tok->len);
+    *rest = token;
+    return function;
+}
+
+Function *program(Token *token) {
+    Function *head = calloc(1, sizeof(Function));
+    Function *prev = head;
+    while(!at_eof(token)) {
+        Function *curr = func(&token, token);
+        prev->next = curr;
+        prev = curr;
+    }
+    return head->next;
 }

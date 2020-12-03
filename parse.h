@@ -67,15 +67,13 @@ struct Node {
 
 typedef struct Function Function;
 struct Function {
+    Function *next;
     char *name;
     Node *body;
     LVar *locals;
 };
 
 LVar *locals;
-
-#define CODE_LENGTH 100
-Node *code[CODE_LENGTH];
 
 Node *new_node(NodeKind, Node*, Node*);
 Node *new_node_num(int val);
@@ -86,6 +84,7 @@ Node *add();
 Node *relational();
 Node *equality(Token**, Token*);
 Node *expr(Token**, Token*);
-void program(Token*);
+Node *block(Token**, Token*);
+Function *program(Token*);
 
 #endif //INC_9CC_PARSE_H

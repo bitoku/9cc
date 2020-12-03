@@ -148,22 +148,23 @@ void gen(const Node *node) {
     printf("  push rax\n");
 }
 
-void codegen() {
-    printf(".intel_syntax noprefix\n");
-    printf(".globl _main\n");
-    printf("_main:\n");
+void funcgen(Function *function) {
+    printf("_%s:\n", function->name);
 
     // prologue
     printf("  push rbp\n");
     printf("  mov rbp, rsp\n");
     printf("  sub rsp, 208\n");
 
-    for (int i = 0; code[i]; i++) {
-        gen(code[i]);
-        printf("  pop rax\n");
-    }
+    gen(function->body);
+    printf("  pop rax\n");
 
     printf("  mov rsp, rbp\n");
     printf("  pop rbp\n");
     printf("  ret\n");
+}
+
+void prologue() {
+    printf(".intel_syntax noprefix\n");
+    printf(".globl _main\n");
 }

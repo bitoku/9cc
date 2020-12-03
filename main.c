@@ -13,7 +13,10 @@ int main(int argc, char **argv) {
     char *user_input = argv[1];
     label_count = 0;
     Token *token = tokenize(user_input);
-    program(token);
-    codegen();
+    Function *functions = program(token);
+    prologue();
+    for (Function *func = functions; func; func = func->next) {
+        funcgen(func);
+    }
     return 0;
 }
