@@ -33,18 +33,16 @@ struct Token {
     size_t len; // length of str;
 };
 
-Token *token;
-char *user_input;
 bool starts_with(const char*, const char*);
 void error(char*, ...);
 void error_at(char*, char*, ...);
-void expect(char*);
-int expect_number();
+void expect(char*, Token**);
+int expect_number(Token**);
 bool at_eof();
 Token *tokenize(char*);
-bool consume(char*);
-bool peek(char*);
-Token *consume_ident();
+bool consume(char*, Token**);
+bool peek(char*, const Token*);
+Token *consume_ident(Token **token);
 
 
 #endif //INC_9CC_TOKEN_H

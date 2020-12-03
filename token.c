@@ -26,51 +26,48 @@ void error_at(char *loc, char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
 
-    unsigned long pos = loc - user_input;
-    fprintf(stderr, "%s\n", user_input);
-    fprintf(stderr, "%*s", (int)pos, "");
     fprintf(stderr, "^ ");
     error(fmt, ap);
 }
 
-void move_next() {
-    token = token->next;
+void move_next(Token **token) {
+    *token = ((*token)->next);
 }
 
-bool consume(char* expected) {
-    if (strlen(expected) != token->len ||
-        !starts_with(token->str, expected)) {
+bool consume(char* expected, Token **token) {
+    if (strlen(expected) != (*token)->len ||
+        !starts_with((*token)->str, expected)) {
         return false;
     }
-    move_next();
+    move_next(token);
     return true;
 }
 
-bool peek(char *expected) {
+bool peek(char *expected, const Token *token) {
     return token->next && strncmp(token->next->str, expected, strlen(expected)) == 0;
 }
 
-Token *consume_ident() {
-    if (token->kind != TK_IDENT) return NULL;
-    Token *tok = token;
-    move_next();
+Token *consume_ident(Token **token) {
+    if ((*token)->kind != TK_IDENT) return NULL;
+    Token *tok = *token;
+    move_next(token);
     return tok;
 }
 
-void expect(char* expected) {
-    if (!consume(expected)) {
-        error_at(token->str, "'%s'ではありません", expected);
+void expect(char* expected, Token **token) {
+    if (!consume(expected, token)) {
+        error_at((*token)->str, "'%s'ではありません", expected);
     }
 }
 
-int expect_number() {
-    if (token->kind != TK_INT) error_at(token->str, "数ではありません");
-    int val = token->val;
-    move_next();
+int expect_number(Token **token) {
+    if ((*token)->kind != TK_INT) error_at((*token)->str, "数ではありません");
+    int val = (*token)->val;
+    move_next(token);
     return val;
 }
 
-bool at_eof() {
+bool at_eof(Token *token) {
     return token->kind == TK_EOF;
 }
 

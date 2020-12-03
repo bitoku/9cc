@@ -70,24 +70,26 @@ LVar *find_lvar(Token *tok) {
     return NULL;
 }
 
-Node *funccall(Token *tok) {
+Node *funccall(Token **rest, Token *token, Token *tok) {
     Node *node = new_node_call(strndup(tok->str, tok->len));
-    if (consume(")")) {
+    if (consume(")", &token)) {
+        *rest = token;
         return node;
     }
     NodeList *head = calloc(1, sizeof(NodeList));
     NodeList *current = head;
     while (true) {
         NodeList *nodelist = calloc(1, sizeof(NodeList));
-        nodelist->node = expr();
+        nodelist->node = expr(&token, token);
         current->next = nodelist;
         current = nodelist;
-        if (consume(")")) {
+        if (consume(")", &token)) {
             break;
         }
-        expect(",");
+        expect(",", &token);
     }
     node->args = head->next;
+    *rest = token;
     return node;
 }
 
@@ -112,159 +114,176 @@ Node *lvar_node(Token *tok) {
 
 // primary = "(" expr ")" | ident args? | num
 // args = "(" (arg ("," arg)*)? ")"
-Node *primary() {
-    if (consume("(")) {
-        Node *node = expr();
-        expect(")");
-        return node;
-    }
-
-    Token *tok = consume_ident();
-    if (tok) {
-        // function call
-        if (consume("(")) {
-            return funccall(tok);
-        }
-
-        return lvar_node(tok);
-    }
-    return new_node_num(expect_number());
-}
-
-Node *unary() {
-    if (consume("+")) return primary();
-    if (consume("-")) return new_node(ND_SUB, new_node_num(0), primary());
-    return primary();
-}
-
-Node *mul() {
-    Node *node = unary();
-    for (;;) {
-        if (consume("*")) {
-            node = new_node(ND_MUL, node, unary());
-        } else if (consume("/")) {
-            node = new_node(ND_DIV, node, unary());
+Node *primary(Token **rest, Token *token) {
+    Node *node;
+    if (consume("(", &token)) {
+        node = expr(&token, token);
+        expect(")", &token);
+    } else {
+        Token *tok = consume_ident(&token);
+        if (tok) {
+            // function call
+            if (consume("(", &token)) {
+                node = funccall(&token, token, tok);
+            } else {
+                node = lvar_node(tok);
+            }
         } else {
-            return node;
+            node = new_node_num(expect_number(&token));
         }
     }
-}
-
-Node *add() {
-    Node *node = mul();
-    for (;;) {
-        if (consume("+")) {
-            node = new_node(ND_ADD, node, mul());
-        } else if (consume("-")) {
-            node = new_node(ND_SUB, node, mul());
-        } else {
-            return node;
-        }
-    }
-}
-
-Node *relational() {
-    Node *node = add();
-    for (;;) {
-        if (consume("<")) {
-            node = new_node(ND_LT, node, add());
-        } else if (consume("<=")) {
-            node = new_node(ND_LE, node, add());
-        } else if (consume(">")) {
-            node = new_node(ND_LT, add(), node);
-        } else if (consume(">=")) {
-            node = new_node(ND_LE, add(), node);
-        } else {
-            return node;
-        }
-    }
-}
-
-Node *equality() {
-    Node *node = relational();
-    for (;;) {
-        if (consume("==")) {
-            node = new_node(ND_EQ, node, relational());
-        } else if (consume("!=")) {
-            node = new_node(ND_NE, node, relational());
-        } else {
-            return node;
-        }
-    }
-}
-
-Node *assign() {
-    Node *node = equality();
-    if (consume("=")) {
-        node = new_node(ND_ASSIGN, node, assign());
-    }
+    *rest = token;
     return node;
 }
 
-Node *expr() {
-    return assign();
+Node *unary(Token **rest, Token *token) {
+    Node *node;
+    if (consume("-", &token)) {
+        node = new_node(ND_SUB, new_node_num(0), primary(&token, token));
+    } else {
+        consume("+", &token);
+        node = primary(&token, token);
+    }
+    *rest = token;
+    return node;
 }
 
-Node *statement() {
+Node *mul(Token **rest, Token *token) {
+    Node *node = unary(&token, token);
+    for (;;) {
+        if (consume("*", &token)) {
+            node = new_node(ND_MUL, node, unary(&token, token));
+        } else if (consume("/", &token)) {
+            node = new_node(ND_DIV, node, unary(&token, token));
+        } else {
+            *rest = token;
+            return node;
+        }
+    }
+}
+
+Node *add(Token **rest, Token *token) {
+    Node *node = mul(&token, token);
+    for (;;) {
+        if (consume("+", &token)) {
+            node = new_node(ND_ADD, node, mul(&token, token));
+        } else if (consume("-", &token)) {
+            node = new_node(ND_SUB, node, mul(&token, token));
+        } else {
+            *rest = token;
+            return node;
+        }
+    }
+}
+
+Node *relational(Token **rest, Token *token) {
+    Node *node = add(&token, token);
+    for (;;) {
+        if (consume("<", &token)) {
+            node = new_node(ND_LT, node, add(&token, token));
+        } else if (consume("<=", &token)) {
+            node = new_node(ND_LE, node, add(&token, token));
+        } else if (consume(">", &token)) {
+            node = new_node(ND_LT, add(&token, token), node);
+        } else if (consume(">=", &token)) {
+            node = new_node(ND_LE, add(&token, token), node);
+        } else {
+            *rest = token;
+            return node;
+        }
+    }
+}
+
+Node *equality(Token **rest, Token *token) {
+    Node *node = relational(&token, token);
+    for (;;) {
+        if (consume("==", &token)) {
+            node = new_node(ND_EQ, node, relational(&token, token));
+        } else if (consume("!=", &token)) {
+            node = new_node(ND_NE, node, relational(&token, token));
+        } else {
+            *rest = token;
+            return node;
+        }
+    }
+}
+
+Node *assign(Token **rest, Token *token) {
+    Node *node = equality(&token, token);
+    if (consume("=", &token)) {
+        node = new_node(ND_ASSIGN, node, assign(&token, token));
+    }
+    *rest = token;
+    return node;
+}
+
+Node *expr(Token **rest, Token *token) {
+    Node *node = assign(&token, token);
+    *rest = token;
+    return node;
+}
+
+Node *statement(Token** rest, Token *token) {
     Node *node;
-    if (consume("{")) {
+    if (consume("{", &token)) {
         NodeList *head = calloc(1, sizeof(NodeList));
         NodeList *current_nl = head;
-        for (int i = 0; i < CODE_LENGTH && !consume("}"); i++) {
+        for (int i = 0; i < CODE_LENGTH && !consume("}", &token); i++) {
             NodeList *new_nl = calloc(1, sizeof(NodeList));
-            new_nl->node = statement();
+            new_nl->node = statement(&token, token);
             current_nl->next = new_nl;
             current_nl = new_nl;
         }
         node = calloc(1, sizeof(Node));
         node->kind = ND_BLOCK;
         node->statements = head->next;
-    } else if (consume("return")) {
-        node = new_node(ND_RETURN, expr(), NULL);
-        expect(";");
-    } else if (consume("if")) {
-        expect("(");
-        Node *condition = expr();
-        expect(")");
-        Node *main_statement = statement();
+    } else if (consume("return", &token)) {
+        node = new_node(ND_RETURN, expr(&token, token), NULL);
+        expect(";", &token);
+    } else if (consume("if", &token)) {
+        expect("(", &token);
+        Node *condition = expr(&token, token);
+        expect(")", &token);
+        Node *main_statement = statement(&token, token);
         Node *alt_statement = NULL;
-        if (consume("else")) {
-            alt_statement = statement();
+        if (consume("else", &token)) {
+            alt_statement = statement(&token, token);
         }
         node = new_node_if(condition, main_statement, alt_statement);
-    } else if (consume("while")) {
-        expect("(");
-        Node *condition = expr();
-        expect(")");
-        Node *main_statement = statement();
+    } else if (consume("while", &token)) {
+        expect("(", &token);
+        Node *condition = expr(&token, token);
+        expect(")", &token);
+        Node *main_statement = statement(&token, token);
         node = new_node_while(condition, main_statement);
-    } else if (consume("for")) {
-        expect("(");
+    } else if (consume("for", &token)) {
+        expect("(", &token);
         Node *init=NULL, *condition=NULL, *loop=NULL;
-        if (!consume(";")) {
-            init = expr();
-            expect(";");
+        if (!consume(";", &token)) {
+            init = expr(&token, token);
+            expect(";", &token);
         }
-        if (!consume(";")) {
-            condition = expr();
-            expect(";");
+        if (!consume(";", &token)) {
+            condition = expr(&token, token);
+            expect(";", &token);
         }
-        if (!consume(")")) {
-            loop = expr();
-            expect(")");
+        if (!consume(")", &token)) {
+            loop = expr(&token, token);
+            expect(")", &token);
         }
-        Node *main_statement = statement();
+        Node *main_statement = statement(&token, token);
         node = new_node_for(init, condition, loop, main_statement);
     } else {
-        node = expr();
-        expect(";");
+        node = expr(&token, token);
+        expect(";", &token);
     }
+    *rest = token;
     return node;
 }
 
-void program() {
-    for (int i = 0; i < CODE_LENGTH && !at_eof(); i++) {
-        code[i] = statement();
+void program(Token *token) {
+    for (int i = 0; i < CODE_LENGTH && !at_eof(token); i++) {
+        code[i] = statement(&token, token);
     }
     code[CODE_LENGTH] = NULL;
 }

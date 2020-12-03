@@ -84,8 +84,8 @@ Node *unary();
 Node *mul();
 Node *add();
 Node *relational();
-Node *equality();
-Node *expr();
-void program();
+Node *equality(Token**, Token*);
+Node *expr(Token**, Token*);
+void program(Token*);
 
 #endif //INC_9CC_PARSE_H

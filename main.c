@@ -10,10 +10,10 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    user_input = argv[1];
+    char *user_input = argv[1];
     label_count = 0;
-    token = tokenize(user_input);
-    program();
+    Token *token = tokenize(user_input);
+    program(token);
     codegen();
     return 0;
 }
