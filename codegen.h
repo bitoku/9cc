@@ -7,7 +7,6 @@
 
 #include "parse.h"
 
-void codegen();
 void funcgen(Function*);
 void prologue();
 void gen(const Node*);

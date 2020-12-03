@@ -306,7 +306,9 @@ Function *program(Token *token) {
     Function *prev = head;
     while(!at_eof(token)) {
         Function *curr = func(&token, token);
+        curr->locals = locals;
         prev->next = curr;
+        locals = NULL;
         prev = curr;
     }
     return head->next;

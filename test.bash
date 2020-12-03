@@ -75,5 +75,8 @@ assert 2 'main(){ return sub(5, 3); }'
 assert 21 'main(){ return add6(1, 2, 3, 4, 5, 6); }'
 assert 66 'main(){ return add6(1, 2, add6(3, 4, 5, 6, 7, 8), 9, 10, 11); }'
 assert 136 'main(){ return add6(1, 2, add6(3, add6(4, 5, 6, 7, 8, 9), 10, 11, 12, 13), 14, 15, 16); }'
+assert 0 'main(){ return zero(); } zero(){ return 0; }'
+assert 1 'main(){ return one(); } one(){ return 1; }'
+assert 5 'main(){ return two() + three(); } two() { return 2; } three() { return 3; }'
 
 echo OK
