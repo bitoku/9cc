@@ -69,6 +69,7 @@ typedef struct Function Function;
 struct Function {
     Function *next;
     char *name;
+    LVar *params;
     Node *body;
     LVar *locals;
 };

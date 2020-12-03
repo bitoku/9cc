@@ -93,22 +93,25 @@ Node *funccall(Token **rest, Token *token, Token *tok) {
     return node;
 }
 
-Node *lvar_node(Token *tok) {
+LVar *new_lvar(Token *token) {
+    LVar *lvar = find_lvar(token);
+    if (lvar) {
+        return lvar;
+    }
+    lvar = calloc(1, sizeof(LVar));
+    lvar->next = locals;
+    lvar->name = token->str;
+    lvar->len = token->len;
+    lvar->offset = locals ? locals->offset + 8 : 0;
+    locals = lvar;
+    return lvar;
+}
+
+Node *lvar_node(Token *token) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
 
-    LVar *lvar = find_lvar(tok);
-    if (lvar) {
-        node->lvar = lvar;
-    } else {
-        lvar = calloc(1, sizeof(LVar));
-        lvar->next = locals;
-        lvar->name = tok->str;
-        lvar->len = tok->len;
-        lvar->offset = locals ? locals->offset + 8 : 0;
-        node->lvar = lvar;
-        locals = lvar;
-    }
+    node->lvar = new_lvar(token);
     return node;
 }
 
