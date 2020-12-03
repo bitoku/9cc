@@ -170,6 +170,17 @@ void funcgen(Function *function) {
     printf("  mov rbp, rsp\n");
     printf("  sub rsp, %d\n", stack_size(function));
 
+    int i = 0;
+    for (LVar *var = function->params; var; var = var->next) {
+        printf("  mov rax, rbp\n");
+        printf("  sub rax, %d\n", var->offset);
+        printf("  push rax\n");
+        printf("  push %s\n", argreg[i++]);
+        printf("  pop rdi\n");
+        printf("  pop rax\n");
+        printf("  mov [rax], rdi\n");
+        printf("  push rdi\n");
+    }
     gen(function->body);
     printf("  pop rax\n");
 

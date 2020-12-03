@@ -78,5 +78,6 @@ assert 136 'main(){ return add6(1, 2, add6(3, add6(4, 5, 6, 7, 8, 9), 10, 11, 12
 assert 0 'main(){ return zero(); } zero(){ return 0; }'
 assert 1 'main(){ return one(); } one(){ return 1; }'
 assert 5 'main(){ return two() + three(); } two() { return 2; } three() { return 3; }'
+assert 6 'main(){ return mul(2, 3); } mul(a, b) { return a * b; }'
 
 echo OK

@@ -107,6 +107,14 @@ LVar *new_lvar(Token *token) {
     return lvar;
 }
 
+LVar *duplicate_lvar(LVar *origin) {
+    LVar *lvar = calloc(1, sizeof(LVar));
+    lvar->name = origin->name;
+    lvar->len = origin->len;
+    lvar->offset = origin->offset;
+    return lvar;
+}
+
 Node *lvar_node(Token *token) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
@@ -295,8 +303,24 @@ Function *func(Token **rest, Token *token) {
     Function *function = calloc(1, sizeof(Function));
     Token *tok = consume_ident(&token);
     expect("(", &token);
-    // TODO
-    expect(")", &token);
+    if (!consume(")", &token)) {
+        LVar *head = calloc(1, sizeof(Function));
+        LVar *curr = head;
+        while (true) {
+            Token *param = consume_ident(&token);
+            if (!param) {
+                error("not identifier");
+            }
+            LVar *lvar = duplicate_lvar(new_lvar(param));
+            curr->next = lvar;
+            curr = lvar;
+            if (consume(")", &token)) {
+                break;
+            }
+            expect(",", &token);
+        }
+        function->params = head->next;
+    }
     expect("{", &token);
     function->body = block(&token, token);
     function->name = strndup(tok->str, tok->len);
@@ -306,13 +330,12 @@ Function *func(Token **rest, Token *token) {
 
 Function *program(Token *token) {
     Function *head = calloc(1, sizeof(Function));
-    Function *prev = head;
+    Function *curr = head;
     while(!at_eof(token)) {
-        Function *curr = func(&token, token);
-        curr->locals = locals;
-        prev->next = curr;
+        Function *function = func(&token, token);
+        curr->next = function;
+        curr = curr->next;
         locals = NULL;
-        prev = curr;
     }
     return head->next;
 }
