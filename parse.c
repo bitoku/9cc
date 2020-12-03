@@ -70,6 +70,46 @@ LVar *find_lvar(Token *tok) {
     return NULL;
 }
 
+Node *funccall(Token *tok) {
+    Node *node = new_node_call(strndup(tok->str, tok->len));
+    if (consume(")")) {
+        return node;
+    }
+    NodeList *head = calloc(1, sizeof(NodeList));
+    NodeList *current = head;
+    while (true) {
+        NodeList *nodelist = calloc(1, sizeof(NodeList));
+        nodelist->node = expr();
+        current->next = nodelist;
+        current = nodelist;
+        if (consume(")")) {
+            break;
+        }
+        expect(",");
+    }
+    node->args = head->next;
+    return node;
+}
+
+Node *lvar_node(Token *tok) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+
+    LVar *lvar = find_lvar(tok);
+    if (lvar) {
+        node->lvar = lvar;
+    } else {
+        lvar = calloc(1, sizeof(LVar));
+        lvar->next = locals;
+        lvar->name = tok->str;
+        lvar->len = tok->len;
+        lvar->offset = locals ? locals->offset + 8 : 0;
+        node->lvar = lvar;
+        locals = lvar;
+    }
+    return node;
+}
+
 // primary = "(" expr ")" | ident args? | num
 // args = "(" (arg ("," arg)*)? ")"
 Node *primary() {
@@ -83,41 +123,10 @@ Node *primary() {
     if (tok) {
         // function call
         if (consume("(")) {
-            Node *node = new_node_call(strndup(tok->str, tok->len));
-            if (consume(")")) {
-                return node;
-            }
-            NodeList *head = calloc(1, sizeof(NodeList));
-            NodeList *current = head;
-            while (true) {
-                NodeList *nodelist = calloc(1, sizeof(NodeList));
-                nodelist->node = expr();
-                current->next = nodelist;
-                current = nodelist;
-                if (consume(")")) {
-                    break;
-                }
-                expect(",");
-            }
-            node->args = head->next;
-            return node;
+            return funccall(tok);
         }
-        Node *node = calloc(1, sizeof(Node));
-        node->kind = ND_LVAR;
 
-        LVar *lvar = find_lvar(tok);
-        if (lvar) {
-            node->offset = lvar->offset;
-        } else {
-            lvar = calloc(1, sizeof(LVar));
-            lvar->next = locals;
-            lvar->name = tok->str;
-            lvar->len = tok->len;
-            lvar->offset = locals ? locals->offset + 8 : 0;
-            node->offset = lvar->offset;
-            locals = lvar;
-        }
-        return node;
+        return lvar_node(tok);
     }
     return new_node_num(expect_number());
 }

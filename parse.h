@@ -39,13 +39,22 @@ struct NodeList {
     Node *node;
 };
 
+typedef struct LVar LVar;
+
+struct LVar {
+    LVar *next;
+    char *name;
+    int len;
+    int offset;
+};
+
 
 struct Node {
     NodeKind kind;
     Node *left;
     Node *right;
     int val;  // used only if "integer"
-    int offset; // used only if "variable"
+    LVar *lvar; // used only if "variable"
     Node *init; // used if "for"
     Node *loop; // used if "for"
     Node *condition; // used if "for", "while", "if"
@@ -56,13 +65,11 @@ struct Node {
     NodeList *args; // function call
 };
 
-typedef struct LVar LVar;
-
-struct LVar {
-    LVar *next;
+typedef struct Function Function;
+struct Function {
     char *name;
-    int len;
-    int offset;
+    Node *body;
+    LVar *locals;
 };
 
 LVar *locals;

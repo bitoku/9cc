@@ -10,7 +10,7 @@ void gen_lval(const Node *node) {
     if (node->kind != ND_LVAR) error("左辺値が変数ではありません");
 
     printf("  mov rax, rbp\n");
-    printf("  sub rax, %d\n", node->offset);
+    printf("  sub rax, %d\n", node->lvar->offset);
     printf("  push rax\n");
 }
 
@@ -92,7 +92,6 @@ void gen(const Node *node) {
         int nargs = 0;
         for (NodeList *arg = node->args; arg; arg = arg->next) {
             gen(arg->node);
-//            printf("  push rax\n");
             nargs++;
         }
 
