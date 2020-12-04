@@ -9,7 +9,7 @@
 
 void funcgen(Function*);
 void prologue();
-void gen(const Node*);
+void gen(const Node*, Function*);
 
 int label_count;
 

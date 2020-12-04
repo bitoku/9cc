@@ -45,6 +45,7 @@ assert 1 'main(){return 1<0!=1<2;}'
 assert 1 'main(){return (1==1)>(1==0);}'
 assert 1 'main(){i=1;return i;}'
 assert 1 'main(){i=j=1;return i;}'
+assert 1 'main(){i=j=1;return j;}'
 assert 2 'main(){i=1+1;return i;}'
 assert 11 'main(){i=2*3;j=i+5;return j;}'
 assert 1 'main(){foo=bar=1;return foo;}'
@@ -78,6 +79,6 @@ assert 136 'main(){ return add6(1, 2, add6(3, add6(4, 5, 6, 7, 8, 9), 10, 11, 12
 assert 0 'main(){ return zero(); } zero(){ return 0; }'
 assert 1 'main(){ return one(); } one(){ return 1; }'
 assert 5 'main(){ return two() + three(); } two() { return 2; } three() { return 3; }'
-assert 6 'main(){ return mul(2, 3); } mul(a, b) { return a * b; }'
+assert 0 'main(){ return ident(0); } ident(a) { return a; }'
 
 echo OK

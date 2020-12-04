@@ -61,13 +61,38 @@ Node *new_node_call(char *funcname) {
     return node;
 }
 
-LVar *find_lvar(Token *tok) {
-    for (LVar *lvar = locals; lvar; lvar = lvar->next) {
-        if (lvar->len == tok->len && !memcmp(tok->str, lvar->name, lvar->len)){
-            return lvar;
+Var *find_var(Token *tok) {
+    for (VarList *varList = locals; varList; varList = varList->next) {
+        Var *var = varList->var;
+        if (var->len == tok->len && !memcmp(tok->str, var->name, var->len)){
+            return var;
         }
     }
     return NULL;
+}
+
+Var *new_var(Token *token) {
+    Var *var = find_var(token);
+    if (var) {
+        return var;
+    }
+    var = calloc(1, sizeof(Var));
+    var->name = token->str;
+    var->len = token->len;
+
+    VarList *varList = calloc(1, sizeof(VarList));
+    varList->var = var;
+    varList->next = locals;
+    locals = varList;
+    return var;
+}
+
+Node *new_node_var(Token *token) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+
+    node->var = new_var(token);
+    return node;
 }
 
 Node *funccall(Token **rest, Token *token, Token *tok) {
@@ -93,36 +118,6 @@ Node *funccall(Token **rest, Token *token, Token *tok) {
     return node;
 }
 
-LVar *new_lvar(Token *token) {
-    LVar *lvar = find_lvar(token);
-    if (lvar) {
-        return lvar;
-    }
-    lvar = calloc(1, sizeof(LVar));
-    lvar->next = locals;
-    lvar->name = token->str;
-    lvar->len = token->len;
-    lvar->offset = locals ? locals->offset + 8 : 0;
-    locals = lvar;
-    return lvar;
-}
-
-LVar *duplicate_lvar(LVar *origin) {
-    LVar *lvar = calloc(1, sizeof(LVar));
-    lvar->name = origin->name;
-    lvar->len = origin->len;
-    lvar->offset = origin->offset;
-    return lvar;
-}
-
-Node *lvar_node(Token *token) {
-    Node *node = calloc(1, sizeof(Node));
-    node->kind = ND_LVAR;
-
-    node->lvar = new_lvar(token);
-    return node;
-}
-
 // primary = "(" expr ")" | ident args? | num
 // args = "(" (arg ("," arg)*)? ")"
 Node *primary(Token **rest, Token *token) {
@@ -137,7 +132,7 @@ Node *primary(Token **rest, Token *token) {
             if (consume("(", &token)) {
                 node = funccall(&token, token, tok);
             } else {
-                node = lvar_node(tok);
+                node = new_node_var(tok);
             }
         } else {
             node = new_node_num(expect_number(&token));
@@ -304,22 +299,23 @@ Function *func(Token **rest, Token *token) {
     Token *tok = consume_ident(&token);
     expect("(", &token);
     if (!consume(")", &token)) {
-        LVar *head = calloc(1, sizeof(Function));
-        LVar *curr = head;
+        VarList *params = NULL;
         while (true) {
             Token *param = consume_ident(&token);
             if (!param) {
                 error("not identifier");
             }
-            LVar *lvar = duplicate_lvar(new_lvar(param));
-            curr->next = lvar;
-            curr = lvar;
+            Var *var = new_var(param);
+            VarList *varList = calloc(1, sizeof(VarList));
+            varList->next = params;
+            varList->var = var;
+            params = varList;
             if (consume(")", &token)) {
                 break;
             }
             expect(",", &token);
         }
-        function->params = head->next;
+        function->params = params;
     }
     expect("{", &token);
     function->body = block(&token, token);
@@ -333,6 +329,7 @@ Function *program(Token *token) {
     Function *curr = head;
     while(!at_eof(token)) {
         Function *function = func(&token, token);
+        function->locals = locals;
         curr->next = function;
         curr = curr->next;
         locals = NULL;

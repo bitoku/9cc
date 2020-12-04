@@ -6,97 +6,90 @@
 
 static char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
-// Round up `n` to the nearest multiple of `align`. For instance,
-// align_to(5, 8) returns 8 and align_to(11, 8) returns 16.
-static int align_to(int n, int align) {
-    return (n + align - 1) / align * align;
-}
-
-static int stack_size(Function *function) {
-    int offset = 16;
-    for (LVar *lvar = function->locals; lvar; lvar = lvar->next) {
+static int assign_var(Function *function) {
+    int offset = 0;
+    for (VarList *varList = function->locals; varList; varList = varList->next) {
+        Var *var = varList->var;
         offset += 8;
+        var->offset = offset;
     }
-    return align_to(offset, 16);
+    return offset;
 }
 
-void gen_lval(const Node *node) {
+void gen_var(const Node *node) {
     if (node->kind != ND_LVAR) error("左辺値が変数ではありません");
 
     printf("  mov rax, rbp\n");
-    printf("  sub rax, %d\n", node->lvar->offset);
+    printf("  sub rax, %d\n", node->var->offset);
     printf("  push rax\n");
 }
 
-void gen(const Node *node) {
+void gen(const Node *node, Function *function) {
     int label = label_count++;
 
     switch (node->kind) {
     case ND_BLOCK:
         for (NodeList *cur = node->statements; cur; cur = cur->next) {
-            gen(cur->node);
-            printf("  pop rax\n");
+            gen(cur->node, function);
         }
         return;
     case ND_IF:
-        gen(node->condition);
+        gen(node->condition, function);
         printf("  pop rax\n");
         printf("  cmp rax, 0\n");
         if (node->alt_statement) {
             printf("  je  .Lelse%d\n", label);
-            gen(node->main_statement);
+            gen(node->main_statement, function);
             printf("  jmp .Lend%d\n", label);
             printf(".Lelse%d:\n", label);
-            gen(node->alt_statement);
+            gen(node->alt_statement, function);
         } else {
             printf("  je  .Lend%d\n", label);
-            gen(node->main_statement);
+            gen(node->main_statement, function);
         }
         printf(".Lend%d:\n", label);
         return;
     case ND_WHILE:
         printf(".Lbegin%d:\n", label);
-        gen(node->condition);
+        gen(node->condition, function);
         printf("  pop rax\n");
         printf("  cmp rax, 0\n");
         printf("  je  .Lend%d\n", label);
-        gen(node->main_statement);
+        gen(node->main_statement, function);
         printf("  jmp .Lbegin%d\n", label);
         printf(".Lend%d:\n", label);
         return;
     case ND_FOR:
-        if (node->init) gen(node->init);
+        if (node->init) gen(node->init, function);
         printf(".Lbegin%d:\n", label);
         if (node->condition) {
-            gen(node->condition);
+            gen(node->condition, function);
             printf("  pop rax\n");
             printf("  cmp rax, 0\n");
             printf("  je  .Lend%d\n", label);
         }
-        gen(node->main_statement);
-        if (node->loop) gen(node->loop);
+        gen(node->main_statement, function);
+        if (node->loop) gen(node->loop, function);
         printf("  jmp .Lbegin%d\n", label);
         printf(".Lend%d:\n", label);
         return;
     case ND_RETURN:
-        gen(node->left);
+        gen(node->left, function);
         printf("  pop rax\n");
-        printf("  mov rsp, rbp\n");
-        printf("  pop rbp\n");
-        printf("  ret\n");
+        printf("  jmp .Lreturn.%s\n", function->name);
         return;
     case ND_NUM:
         printf("  push %d\n", node->val);
         return;
     case ND_LVAR:
-        gen_lval(node);
+        gen_var(node);
         printf("  pop rax\n");
         printf("  mov rax, [rax]\n");
         printf("  push rax\n");
         return;
     case ND_ASSIGN:
-        gen_lval(node->left);
-        gen(node->right);
+        gen_var(node->left);
+        gen(node->right, function);
         printf("  pop rdi\n");
         printf("  pop rax\n");
         printf("  mov [rax], rdi\n");
@@ -105,21 +98,35 @@ void gen(const Node *node) {
     case ND_FUNCCALL: {
         int nargs = 0;
         for (NodeList *arg = node->args; arg; arg = arg->next) {
-            gen(arg->node);
+            gen(arg->node, function);
             nargs++;
         }
 
         for (int i = nargs-1; i >= 0; i--) {
             printf("  pop %s\n", argreg[i]);
         }
+        // We need to align RSP to a 16 byte boundary before
+        // calling a function because it is an ABI requirement.
+        // RAX is set to 0 for variadic function.
+        printf("  mov rax, rsp\n");
+        printf("  and rax, 15\n");
+        printf("  jnz .Lcall%d\n", label);
+        printf("  mov rax, 0\n");
         printf("  call _%s\n", node->funcname);
+        printf("  jmp .Lend%d\n", label);
+        printf(".Lcall%d:\n", label);
+        printf("  sub rsp, 8\n");
+        printf("  mov rax, 0\n");
+        printf("  call _%s\n", node->funcname);
+        printf("  add rsp, 8\n");
+        printf(".Lend%d:\n", label);
         printf("  push rax\n");
         return;
     }
     }
 
-    gen(node->left);
-    gen(node->right);
+    gen(node->left, function);
+    gen(node->right, function);
 
     printf("  pop rdi\n");
     printf("  pop rax\n");
@@ -165,25 +172,21 @@ void gen(const Node *node) {
 void funcgen(Function *function) {
     printf("_%s:\n", function->name);
 
+    int offset = assign_var(function);
+
     // prologue
     printf("  push rbp\n");
     printf("  mov rbp, rsp\n");
-    printf("  sub rsp, %d\n", stack_size(function));
+    printf("  sub rsp, %d\n", offset);
 
     int i = 0;
-    for (LVar *var = function->params; var; var = var->next) {
-        printf("  mov rax, rbp\n");
-        printf("  sub rax, %d\n", var->offset);
-        printf("  push rax\n");
-        printf("  push %s\n", argreg[i++]);
-        printf("  pop rdi\n");
-        printf("  pop rax\n");
-        printf("  mov [rax], rdi\n");
-        printf("  push rdi\n");
+    for (VarList *varList = function->params; varList; varList = varList->next) {
+        Var *var = varList->var;
+        printf("  mov [rbp-%d], %s\n", var->offset, argreg[i++]);
     }
-    gen(function->body);
-    printf("  pop rax\n");
+    gen(function->body, function);
 
+    printf(".Lreturn.%s:\n", function->name);
     printf("  mov rsp, rbp\n");
     printf("  pop rbp\n");
     printf("  ret\n");

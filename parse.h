@@ -39,13 +39,19 @@ struct NodeList {
     Node *node;
 };
 
-typedef struct LVar LVar;
+typedef struct Var Var;
 
-struct LVar {
-    LVar *next;
+struct Var {
     char *name;
     int len;
     int offset;
+};
+
+typedef struct VarList VarList;
+
+struct VarList {
+    VarList *next;
+    Var *var;
 };
 
 
@@ -54,7 +60,7 @@ struct Node {
     Node *left;
     Node *right;
     int val;  // used only if "integer"
-    LVar *lvar; // used only if "variable"
+    Var *var; // used only if "variable"
     Node *init; // used if "for"
     Node *loop; // used if "for"
     Node *condition; // used if "for", "while", "if"
@@ -69,12 +75,12 @@ typedef struct Function Function;
 struct Function {
     Function *next;
     char *name;
-    LVar *params;
+    VarList *params;
     Node *body;
-    LVar *locals;
+    VarList *locals;
 };
 
-LVar *locals;
+VarList *locals;
 
 Node *new_node(NodeKind, Node*, Node*);
 Node *new_node_num(int val);
