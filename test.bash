@@ -80,5 +80,7 @@ assert 0 'main(){ return zero(); } zero(){ return 0; }'
 assert 1 'main(){ return one(); } one(){ return 1; }'
 assert 5 'main(){ return two() + three(); } two() { return 2; } three() { return 3; }'
 assert 0 'main(){ return ident(0); } ident(a) { return a; }'
+assert 6 'main(){ return mul(2, 3); } mul(a, b) { return a * b; }'
+assert 1 'main(){ return mysub(2, 1); } mysub(a, b) { return a - b; }'
 
 echo OK

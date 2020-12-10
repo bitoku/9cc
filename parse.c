@@ -298,6 +298,7 @@ Function *func(Token **rest, Token *token) {
     Function *function = calloc(1, sizeof(Function));
     Token *tok = consume_ident(&token);
     expect("(", &token);
+    int nparams = 0;
     if (!consume(")", &token)) {
         VarList *params = NULL;
         while (true) {
@@ -310,6 +311,7 @@ Function *func(Token **rest, Token *token) {
             varList->next = params;
             varList->var = var;
             params = varList;
+            nparams++;
             if (consume(")", &token)) {
                 break;
             }
@@ -317,6 +319,7 @@ Function *func(Token **rest, Token *token) {
         }
         function->params = params;
     }
+    function->nparams = nparams;
     expect("{", &token);
     function->body = block(&token, token);
     function->name = strndup(tok->str, tok->len);

@@ -76,6 +76,7 @@ struct Function {
     Function *next;
     char *name;
     VarList *params;
+    int nparams;
     Node *body;
     VarList *locals;
 };

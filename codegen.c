@@ -182,7 +182,8 @@ void funcgen(Function *function) {
     int i = 0;
     for (VarList *varList = function->params; varList; varList = varList->next) {
         Var *var = varList->var;
-        printf("  mov [rbp-%d], %s\n", var->offset, argreg[i++]);
+        int j = function->nparams - 1 - (i++);
+        printf("  mov [rbp-%d], %s\n", var->offset, argreg[j]);
     }
     gen(function->body, function);
 
