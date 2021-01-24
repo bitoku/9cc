@@ -82,5 +82,14 @@ assert 5 'main(){ return two() + three(); } two() { return 2; } three() { return
 assert 0 'main(){ return ident(0); } ident(a) { return a; }'
 assert 6 'main(){ return mul(2, 3); } mul(a, b) { return a * b; }'
 assert 1 'main(){ return mysub(2, 1); } mysub(a, b) { return a - b; }'
+assert 136 'main(){ return add6(1, 2, add6(3, add6(4, 5, 6, 7, 8, 9), 10, 11, 12, 13), 14, 15, 16); } add6(a, b, c, d, e, f) { return a + b + c + d + e + f; }'
+assert 3 'main() { x=3; return *&x; }'
+assert 3 'main() { x=3; y=&x; return *y; }'
+assert 3 'main() { x=3; y=&x; z=&y; return **z; }'
+assert 5 'main() { x=3; y=5; return *(&x+8); }'
+assert 3 'main() { x=3; y=5; return *(&y-8); }'
+assert 5 'main() { x=3; y=&x; *y=5; return x; }'
+assert 7 'main() { x=3; y=5; *(&x+8)=7; return y; }'
+assert 7 'main() { x=3; y=5; *(&y-8)=7; return x; }'
 
 echo OK

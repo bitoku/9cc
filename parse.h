@@ -26,6 +26,8 @@ typedef enum {
     ND_FOR,
     ND_BLOCK,
     ND_FUNCCALL,
+    ND_ADDR,
+    ND_DEREF,
 } NodeKind;
 
 typedef struct NodeList NodeList;

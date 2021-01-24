@@ -142,10 +142,18 @@ Node *primary(Token **rest, Token *token) {
     return node;
 }
 
+// unary = "+"? primary
+//       | "-"? primary
+//       | "*" unary
+//       | "&" unary
 Node *unary(Token **rest, Token *token) {
     Node *node;
     if (consume("-", &token)) {
         node = new_node(ND_SUB, new_node_num(0), primary(&token, token));
+    } else if (consume("&", &token)) {
+        node = new_node(ND_ADDR, unary(&token, token), NULL);
+    } else if (consume("*", &token)) {
+        node = new_node(ND_DEREF, unary(&token, token), NULL);
     } else {
         consume("+", &token);
         node = primary(&token, token);
