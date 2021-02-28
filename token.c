@@ -54,6 +54,13 @@ Token *consume_ident(Token **token) {
     return tok;
 }
 
+Token *consume_type(Token **token) {
+    if ((*token)->kind != TK_TYPE) return NULL;
+    Token *tok = *token;
+    move_next(token);
+    return tok;
+}
+
 void expect(char* expected, Token **token) {
     if (!consume(expected, token)) {
         error_at((*token)->str, "'%s'ではありません", expected);
@@ -81,7 +88,8 @@ Token *new_token(TokenKind kind, Token *cur, char *str, size_t len) {
 }
 
 size_t issymbol(char *p) {
-    const char *reserved[] = {"==", "!=", "<=", ">=", "<", ">", "+", "-", "*", "/", "(", ")", "=", ";", "{", "}", ",", "&"};
+    const char *reserved[] = {"==", "!=", "<=", ">=", "<", ">", "+", "-", "*", "/", "(", ")", "=", ";", "{", "}", ",",
+                              "&"};
     for (int i = 0; i < sizeof(reserved)/sizeof(char*); i++) {
         if (!starts_with(p, reserved[i])) continue;
         return strlen(reserved[i]);
@@ -100,6 +108,8 @@ Token *alnumtoken(char *p, Token *cur, size_t len) {
         return new_token(TK_WHILE, cur, p, 5);
     } else if (strcmp_with_literal(p, "for", len)) {
         return new_token(TK_FOR, cur, p, 3);
+    } else if (strcmp_with_literal(p, "int", len)) {
+        return new_token(TK_TYPE, cur, p, 3);
     }
     return new_token(TK_IDENT, cur, p, len);
 }

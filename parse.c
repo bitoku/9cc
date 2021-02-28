@@ -285,6 +285,7 @@ Node *statement(Token** rest, Token *token) {
     return node;
 }
 
+// block = { statement* }
 Node *block(Token **rest, Token *token) {
     Node *node;
     NodeList *head = calloc(1, sizeof(NodeList));
@@ -302,8 +303,10 @@ Node *block(Token **rest, Token *token) {
     return node;
 }
 
+// function = type ident\((type arg)*\) block
 Function *func(Token **rest, Token *token) {
     Function *function = calloc(1, sizeof(Function));
+    consume_type(&token);
     Token *tok = consume_ident(&token);
     expect("(", &token);
     int nparams = 0;

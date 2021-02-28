@@ -30,6 +30,18 @@ typedef enum {
     ND_DEREF,
 } NodeKind;
 
+typedef enum {
+    TY_INT,
+    TY_PTR
+} TypeKind;
+
+typedef struct Type Type;
+
+struct Type {
+    TypeKind kind;
+    Type *base;
+};
+
 typedef struct NodeList NodeList;
 typedef struct Node Node;
 
@@ -71,6 +83,7 @@ struct Node {
     NodeList *statements; // used if "block"
     char *funcname; // function call
     NodeList *args; // function call
+    Type *ty; // Type
 };
 
 typedef struct Function Function;

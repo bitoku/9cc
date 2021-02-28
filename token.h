@@ -22,7 +22,10 @@ typedef enum {
     TK_ELSE,
     TK_WHILE,
     TK_FOR,
+    TK_TYPE,
 } TokenKind;
+
+typedef struct Type Type;
 
 typedef struct Token Token;
 struct Token {
@@ -43,6 +46,7 @@ Token *tokenize(char*);
 bool consume(char*, Token**);
 bool peek(char*, const Token*);
 Token *consume_ident(Token **token);
+Token *consume_type(Token**);
 
 
 #endif //INC_9CC_TOKEN_H
